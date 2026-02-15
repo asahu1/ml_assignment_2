@@ -2,38 +2,63 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
-import pickle
 
-# -----------------------------------
-# App Title
-# -----------------------------------
+# =========================
+# PAGE CONFIG
+# =========================
+
+st.set_page_config(
+    page_title="BITS ML Assignment 2",
+    page_icon="🤖",
+    layout="wide"
+)
+
 st.title("BITS ML Assignment 2 - Classification Models")
-st.write("Comparison of 6 Machine Learning Models")
 
-# -----------------------------------
-# Models folder path
-# -----------------------------------
+st.write(
+    "This application compares multiple Machine Learning classification models "
+    "and allows predictions on uploaded test datasets."
+)
+
+# =========================
+# DOWNLOAD SAMPLE FILE
+# =========================
+
+st.subheader("Download Sample Test File")
+
+try:
+    with open("test_prediction.csv", "rb") as file:
+        st.download_button(
+            label="Download test_prediction.csv",
+            data=file,
+            file_name="test_prediction.csv",
+            mime="text/csv"
+        )
+except:
+    st.warning("test_prediction.csv not found in repository.")
+
+# =========================
+# LOAD RESULTS
+# =========================
+
 MODELS_FOLDER = "models"
 results_path = os.path.join(MODELS_FOLDER, "results.csv")
-feature_path = os.path.join(MODELS_FOLDER, "feature_names.pkl")
 
-# -----------------------------------
-# Check if results.csv exists
-# -----------------------------------
 if not os.path.exists(results_path):
-    st.error("results.csv not found in models folder.")
+
+    st.error("results.csv not found in models folder")
     st.stop()
 
-# Load results
 results = pd.read_csv(results_path)
 
-# Display results table
 st.subheader("Model Performance Metrics")
-st.dataframe(results)
 
-# -----------------------------------
-# Model selection
-# -----------------------------------
+st.dataframe(results, use_container_width=True)
+
+# =========================
+# MODEL SELECTION
+# =========================
+
 model_name = st.selectbox(
     "Select Model for Prediction",
     results["Model"]
@@ -42,97 +67,73 @@ model_name = st.selectbox(
 model_path = os.path.join(MODELS_FOLDER, f"{model_name}.pkl")
 
 if not os.path.exists(model_path):
-    st.error(f"{model_name}.pkl not found in models folder.")
+
+    st.error(f"{model_name}.pkl not found.")
     st.stop()
 
-# Load selected model
 model = joblib.load(model_path)
 
-# -----------------------------------
-# Load feature names
-# -----------------------------------
-if not os.path.exists(feature_path):
-    st.error("feature_names.pkl not found. Please retrain and save features.")
-    st.stop()
+# =========================
+# FILE UPLOAD
+# =========================
 
-with open(feature_path, "rb") as f:
-    feature_names = pickle.load(f)
-
-# -----------------------------------
-# Sample CSV Download Section
-# -----------------------------------
-st.subheader("Download Sample CSV Format")
-
-sample_df = pd.DataFrame(columns=feature_names)
-
-st.download_button(
-    label="Download Sample Input CSV",
-    data=sample_df.to_csv(index=False),
-    file_name="sample_input.csv",
-    mime="text/csv"
-)
-
-# -----------------------------------
-# File upload section
-# -----------------------------------
 st.subheader("Upload CSV File for Prediction")
 
 uploaded_file = st.file_uploader(
-    "Upload CSV file with same feature columns",
+    "Upload CSV file",
     type=["csv"]
 )
 
-# -----------------------------------
-# Prediction logic
-# -----------------------------------
+# =========================
+# PREDICTION LOGIC
+# =========================
+
 if uploaded_file is not None:
 
     try:
+
         data = pd.read_csv(uploaded_file)
 
-        # Check empty file
-        if data.shape[0] == 0:
-            st.error("Uploaded CSV contains no data rows. Please upload a valid file.")
+        if data.empty:
+
+            st.error("Uploaded CSV contains no data rows.")
             st.stop()
 
-        # Ensure correct columns
-        missing_cols = set(feature_names) - set(data.columns)
+        st.subheader("Uploaded Data Preview")
 
-        if missing_cols:
-            st.error("Missing required columns:")
-            st.write(missing_cols)
-            st.stop()
+        st.dataframe(data.head(), use_container_width=True)
 
-        # Keep correct column order
-        data = data[feature_names]
-
-        # Make predictions
         predictions = model.predict(data)
 
-        # Show success message
-        st.success("Prediction Successful!")
-
-        # Display results
         result_df = data.copy()
         result_df["Prediction"] = predictions
 
         st.subheader("Prediction Results")
-        st.dataframe(result_df)
 
-        # Download predictions
+        st.dataframe(result_df, use_container_width=True)
+
+        # download results
+
+        csv = result_df.to_csv(index=False).encode("utf-8")
+
         st.download_button(
-            label="Download Predictions",
-            data=result_df.to_csv(index=False),
+            label="Download Predictions CSV",
+            data=csv,
             file_name="predictions.csv",
             mime="text/csv"
         )
 
-    except Exception as e:
-        st.error("An error occurred during prediction.")
-        st.write("Error details:", str(e))
+        st.success("Prediction completed successfully.")
 
-# -----------------------------------
-# Footer
-# -----------------------------------
-st.write("---")
+    except Exception as e:
+
+        st.error("Prediction failed.")
+        st.error(str(e))
+
+# =========================
+# FOOTER
+# =========================
+
+st.markdown("---")
+
 st.write("Developed for BITS Machine Learning Assignment 2")
