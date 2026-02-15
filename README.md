@@ -151,6 +151,14 @@ GitHub Repository
 Repository Link:
 https://github.com/asahu1/ml_assignment_2
 
+## Sample Test File
+A sample input file `test_prediction.csv` is provided in this repository.
+Use this file to test the prediction functionality in the Streamlit app.
+Steps:
+1. Run the app using: streamlit run app.py
+2. Upload test_prediction.csv
+3. View prediction results
+
 Technologies Used
 
 Python
@@ -169,6 +177,7 @@ Saving trained models using pickle
 Deployment of ML model using Streamlit
 End-to-end ML workflow from development to deployment
 The project reflects real-world machine learning pipeline implementation.
+
 
 Submission Includes
 
